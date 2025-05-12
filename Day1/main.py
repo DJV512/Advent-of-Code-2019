@@ -1,5 +1,5 @@
-FILENAME = "sample_input.txt"
-#FILENAME = "input.txt"
+# FILENAME = "sample_input.txt"
+FILENAME = "input.txt"
 
 import time
 import utils
@@ -38,17 +38,34 @@ def parse_data():
     with open(FILENAME, "r") as f:
         data = f.readlines()
 
-    # return utils.grid_parse_list(data)
-
     return data
 
 
+def fuel_needed(mass):
+    return mass//3 -2 
+
+
 def part1(data):
-    return None
+    total = 0
+    for line in data:
+        a = int(line.strip())
+        total += fuel_needed(a)
+
+    return total
 
 
 def part2(data):
-    return None
+    total = 0
+    for line in data:
+        a = int(line.strip())
+        fuel = fuel_needed(a)
+        total += fuel
+        new_fuel = fuel_needed(fuel)
+        while new_fuel > 0:
+            total += new_fuel
+            new_fuel = fuel_needed(new_fuel)
+
+    return total
 
 
 if __name__ == "__main__":

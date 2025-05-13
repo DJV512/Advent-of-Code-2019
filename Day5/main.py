@@ -13,11 +13,11 @@ def main():
     data = parse_data()
     parse_time = time.time()
 
-    data_copy = deepcopy(data)
-
-    answer1 = part1(data)
+    part1data = deepcopy(data)
+    part2data = deepcopy(data)
+    answer1 = part1(part1data)
     part1_time = time.time()
-    answer2 = part2(data_copy)
+    answer2 = part2(part2data)
     part2_time = time.time()
 
     print("---------------------------------------------------")
@@ -41,32 +41,19 @@ def debug_print(*args, **kwargs):
 def parse_data():
     with open(FILENAME, "r") as f:
         data = f.read()
-
     return [int(x) for x in data.strip().split(",")]
 
-
-def part1(data):
-    data[1] = 12
-    data[2] = 2
     
+def part1(data):
     computer = Intcode(data)
     computer.run()
-    return computer.memory[0]
+    return computer.memory[223]
 
 
-def part2(data_copy):
-
-    for noun in range(100):
-        for verb in range(100):
-            temp = deepcopy(data_copy)
-            temp[1] = noun
-            temp[2] = verb
-            computer = Intcode(temp)
-            computer.run()
-            if computer.memory[0] == 19690720:
-                return 100 * noun + verb
-
-    return None
+def part2(data):
+    computer = Intcode(data)
+    computer.run()
+    return computer.memory[223]
 
 
 if __name__ == "__main__":

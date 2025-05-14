@@ -50,7 +50,7 @@ def part1(data):
     data[2] = 2
     
     computer = Intcode(data)
-    computer.run()
+    computer.run_without_halt()
     return computer.memory[0]
 
 
@@ -62,7 +62,7 @@ def part2(data_copy):
             temp[1] = noun
             temp[2] = verb
             computer = Intcode(temp)
-            computer.run()
+            computer.run_without_halt()
             if computer.memory[0] == 19690720:
                 return 100 * noun + verb
 

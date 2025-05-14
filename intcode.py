@@ -2,14 +2,19 @@ import sys
 
 class Intcode:
 
-    def __init__(self, memory):
+    def __init__(self, memory, inputs=[], verbose=False, interactive=False):
         self.memory = memory
         self.pointer = 0
+        self.inputs = inputs
+        self.outputs = []
+        self.verbose = verbose
+        self.interactive = interactive
+        self.halted = False
 
         self.OPCODES = {
             1: self.add,
             2: self.multiply,
-            3: self.user_input,
+            3: self.input,
             4: self.output,
             5: self.jump_if_true,
             6: self.jump_if_false,
@@ -18,6 +23,7 @@ class Intcode:
             99: self.exit,
         }
 
+        
     def parse_opcode(self):
         instruction = list(f"{self.memory[self.pointer]:04}")
         opcode = int("".join(instruction[-2:]))
@@ -59,14 +65,22 @@ class Intcode:
         self.pointer += 1
 
         
-    def user_input(self, param_modes = None):
-        while True:
-            try:
-                value = int(input("Please input a value: "))
-            except:
-                print("Please enter only numbers.")
-            else:
-                break
+    def input(self, param_modes = None):
+        if self.verbose:
+            print(f"INPUT called. Current inputs: {self.inputs}")
+        if self.inputs:
+            value = self.inputs.pop(0)
+        elif self.interactive:
+            while True:
+                try:
+                    value = int(input("Please input a value: "))
+                except:
+                    print("Please enter only numbers.")
+                else:
+                    break
+        else:
+            return "waiting"
+            
         self.memory[self.memory[self.pointer+1]] = value
         self.pointer += 2
 
@@ -76,8 +90,11 @@ class Intcode:
             value = self.memory[self.memory[self.pointer+1]]
         else:
             value = self.memory[self.pointer+1]
-        print(f"Output of instruction at pointer value {self.pointer} is {value}.")
+        if self.verbose:
+            print(f"Output of instruction at pointer value {self.pointer} is {value}.")
+        self.outputs.append(value)
         self.pointer += 2
+        return value
 
 
     def jump_if_true(self, param_modes):
@@ -126,6 +143,7 @@ class Intcode:
 
     def exit(self, param_modes = None):
         self.pointer = float('inf')
+        self.halted = True
         return
 
     
@@ -133,7 +151,15 @@ class Intcode:
         while self.pointer < len(self.memory):
             opcode, param_modes = self.parse_opcode()
             func = self.OPCODES[opcode]
-            func(param_modes = param_modes)
+            result = func(param_modes = param_modes)
+
+            if result is not None:
+                yield result
+    
+    
+    def run_without_halt(self):
+        for _ in self.run():
+            pass
 
 
 
@@ -144,24 +170,25 @@ def test():
     day2[1] = 12
     day2[2] = 2
     print("Day 2 Memory[0] = 5434663")
-    computer = Intcode(day2)
-    computer.run()
+    computer = Intcode(day2, interactive=True)
+    computer.run_without_halt()
     print(computer.memory[0]==5434663)
     print()
 
 
     print("Day 5 sample: Receive back whatever number you input.")
     day5sample = [3,0,4,0,99]
-    computer = Intcode(day5sample)
-    computer.run()
+    computer = Intcode(day5sample, interactive=True)
+    computer.run_without_halt()
     print(computer.memory[0])
     print()
  
 
     day5part2sample = [3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99]
     print("Day 5 Part 2 Sample (Compare input to 8: 999 if less, 1000 if equal, 1001 if greater)")
-    computer = Intcode(day5part2sample)
-    computer.run()
+    computer = Intcode(day5part2sample, interactive=True)
+    computer.run_without_halt()
+    print(computer.outputs)
     print()
 
 
@@ -170,8 +197,10 @@ def test():
     print("Day 5 Diagnosis Codes:")
     print("Input 1 = 2845163")
     print("Input 5 = 9436229")
-    computer = Intcode(day5)
-    computer.run()
+    computer = Intcode(day5, interactive=True)
+    computer.run_without_halt()
+    print(computer.outputs)
+    print()
 
     
 

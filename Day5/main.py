@@ -45,14 +45,14 @@ def parse_data():
 
     
 def part1(data):
-    computer = Intcode(data)
-    computer.run()
+    computer = Intcode(data, interactive=True)
+    computer.run_without_halt()
     return computer.memory[223]
 
 
 def part2(data):
-    computer = Intcode(data)
-    computer.run()
+    computer = Intcode(data, interactive=True)
+    computer.run_without_halt()
     return computer.memory[223]
 
 

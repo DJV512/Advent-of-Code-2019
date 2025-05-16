@@ -9,6 +9,7 @@ class Intcode:
         self.outputs = []
         self.verbose = verbose
         self.interactive = interactive
+        self.relative_base = 0
         self.halted = False
 
         self.OPCODES = {
@@ -20,16 +21,19 @@ class Intcode:
             6: self.jump_if_false,
             7: self.less_than,
             8: self.equal,
+            9: self.adjust_base,
             99: self.exit,
         }
 
         
     def parse_opcode(self):
-        instruction = list(f"{self.memory[self.pointer]:04}")
+        instruction = list(f"{self.memory[self.pointer]:05}")
         opcode = int("".join(instruction[-2:]))
-        if opcode in [1,2,5,6,7,8]:
+        if opcode in [1,2,7,8]:
+            param_modes = [int(instruction[-3]), int(instruction[-4]), int(instruction[-5])]
+        elif opcode in [5,6]:
             param_modes = [int(instruction[-3]), int(instruction[-4])]
-        elif opcode in [3,4]:
+        elif opcode in [3,4,9]:
             param_modes = [int(instruction[-3])]
         elif opcode == 99:
             return 99, []
@@ -40,27 +44,29 @@ class Intcode:
 
     def get_params(self, param_modes):
         params = []
-        for param_mode in param_modes:
+        for i, param_mode in enumerate(param_modes):
             self.pointer += 1
-            if param_mode == 0:
+            if param_mode == 0 and i != 2:
                 params.append(self.memory[self.memory[self.pointer]])
-            else:
+            elif param_mode == 0:
                 params.append(self.memory[self.pointer])
+            elif param_mode == 1:
+                params.append(self.memory[self.pointer])
+            elif param_mode == 2 and i != 2:
+                params.append(self.memory[self.memory[self.pointer]+self.relative_base])
+            elif param_mode == 2:
+                params.append(self.memory[self.pointer]+self.relative_base)
         return params
         
     
     def add(self, param_modes):
         params = self.get_params(param_modes)
-        self.pointer += 1
-        params.append(self.memory[self.pointer])
         self.memory[params[2]] = params[0] + params[1]
         self.pointer += 1
         
 
     def multiply(self, param_modes):
         params = self.get_params(param_modes)
-        self.pointer += 1
-        params.append(self.memory[self.pointer])
         self.memory[params[2]] = params[0] * params[1]
         self.pointer += 1
 
@@ -80,20 +86,21 @@ class Intcode:
                     break
         else:
             return "waiting"
-            
-        self.memory[self.memory[self.pointer+1]] = value
+        
+        if param_modes[0] == 0:
+            self.memory[self.memory[self.pointer+1]] = value
+        elif param_modes[0] == 2:
+            self.memory[self.memory[self.pointer+1]+self.relative_base] = value
         self.pointer += 2
 
     
     def output(self, param_modes):
-        if param_modes[0] == 0:
-            value = self.memory[self.memory[self.pointer+1]]
-        else:
-            value = self.memory[self.pointer+1]
+        params = self.get_params(param_modes)
+        value = params[0]
         if self.verbose:
-            print(f"Output of instruction at pointer value {self.pointer} is {value}.")
+            print(f"Output = {value}")
         self.outputs.append(value)
-        self.pointer += 2
+        self.pointer += 1
         return value
 
 
@@ -117,8 +124,6 @@ class Intcode:
 
     def less_than(self, param_modes):
         params = self.get_params(param_modes)
-        self.pointer += 1
-        params.append(self.memory[self.pointer])
 
         if params[0] < params[1]:
             self.memory[params[2]] = 1
@@ -130,8 +135,6 @@ class Intcode:
 
     def equal(self, param_modes):
         params = self.get_params(param_modes)
-        self.pointer += 1
-        params.append(self.memory[self.pointer])
 
         if params[0] == params[1]:
             self.memory[params[2]] = 1
@@ -139,9 +142,15 @@ class Intcode:
             self.memory[params[2]] = 0
         
         self.pointer += 1
+
+
+    def adjust_base(self, param_modes):
+        params = self.get_params(param_modes)
+        self.relative_base += params[0]
+        self.pointer += 1
         
 
-    def exit(self, param_modes = None):
+    def exit(self, param_modes):
         self.pointer = float('inf')
         self.halted = True
         return
@@ -150,6 +159,8 @@ class Intcode:
     def run(self):
         while self.pointer < len(self.memory):
             opcode, param_modes = self.parse_opcode()
+            if self.verbose:
+                print(f"{self.pointer=}, {self.relative_base=}, {opcode=}, {param_modes=}")
             func = self.OPCODES[opcode]
             result = func(param_modes = param_modes)
 
@@ -165,6 +176,8 @@ class Intcode:
 
 
 def test():
+    from collections import defaultdict
+    
     with open("Day2/input.txt") as f:
         day2 = [int(x) for x in f.read().strip().split(",")]
     day2[1] = 12
@@ -198,6 +211,18 @@ def test():
     print("Input 1 = 2845163")
     print("Input 5 = 9436229")
     computer = Intcode(day5, interactive=True)
+    computer.run_without_halt()
+    print(computer.outputs)
+    print()
+    
+    
+    day9part1sample = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]
+    day9part1dict = defaultdict(int)
+    for i, item in enumerate(day9part1sample):
+        day9part1dict[i] = item
+    print("Day 9 Part 1 Sample:")
+    print("Output should be [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]")
+    computer = Intcode(day9part1dict)
     computer.run_without_halt()
     print(computer.outputs)
     print()

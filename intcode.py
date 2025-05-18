@@ -1,11 +1,12 @@
 import sys
+from copy import deepcopy
 
 class Intcode:
 
-    def __init__(self, memory, inputs=[], verbose=False, interactive=False):
-        self.memory = memory
+    def __init__(self, memory, inputs=None, verbose=False, interactive=False):
+        self.memory = deepcopy(memory)
         self.pointer = 0
-        self.inputs = inputs
+        self.inputs = inputs or []
         self.outputs = []
         self.verbose = verbose
         self.interactive = interactive

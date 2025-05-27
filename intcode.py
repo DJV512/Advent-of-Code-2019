@@ -173,6 +173,10 @@ class Intcode:
         for _ in self.run():
             pass
 
+    
+    def clone(self):
+        return deepcopy(self)
+
 
 
 

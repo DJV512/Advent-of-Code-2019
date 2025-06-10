@@ -35,12 +35,7 @@ def debug_print(*args, **kwargs):
 
 
 def parse_data():
-    with open(FILENAME, "r") as f:
-        data = f.readlines()
-
-    # return utils.grid_parse_list(data)
-
-    return data
+    return utils.parse_input(FILENAME, method="")
 
 
 def part1(data):

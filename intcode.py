@@ -39,7 +39,7 @@ class Intcode:
         elif opcode == 99:
             return 99, []
         else:
-            raise ValueError(f"Unknown opcode {opcode}")
+            raise ValueError(f"Unknown opcode {opcode} at memory position {self.pointer}.")
         return opcode, param_modes
     
 
